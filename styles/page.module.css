@@ -3,7 +3,7 @@
     top: 0px;
     left: 0px;
     background: linear-gradient(180deg, #0866ff, #053d99);
-    width: 810px;
+    width: 820px;
     height: 1000px;
 }
 
@@ -17,7 +17,7 @@
 .logo {
     position: absolute; /* Allows precise positioning on the page */
     top: 27%; /* Adjust vertical placement */
-    left: 37%; /* Adjust horizontal placement */
+    left: 38%; /* Adjust horizontal placement */
     transform: translate(-50%, -50%); /* Centers the logo */
     width: 80px; /* Width of the logo */
     height: 80px; /* Height of the logo */
@@ -29,9 +29,10 @@
     position: absolute;
     top: 155px;
     left: 57px;
-    font-size: 76.54px;
-    line-height: 70px;
+    font-size: 80px;
+    line-height: 81px;
     font-weight: 600;
+    
 }
 
 
@@ -170,8 +171,8 @@
 }
 .askTheRight {
     position: absolute;
-    top: 309px;
-    left: 148px;
+    top: 312px;
+    left: 155px;
     font-size: 17.54px;
     line-height: 43.85px;
 }
@@ -330,7 +331,7 @@
 .description {
     width: 100%;
     position: absolute; /* Change to absolute for specific positioning */
-    top: 500px; /* Adjust this value to place the box further down from the top */
+    top: 540px; /* Adjust this value to place the box further down from the top */
     left: 950px; /* Adjust this value to position it from the left side */
     height: 400px;
     overflow: hidden;
@@ -343,7 +344,7 @@
 .about {
     position: absolute;
     top: 27.31px;
-    left: 1420px;
+    left: 1450px;
     line-height: 30px;
     display: inline-block;
     width: 117px;
@@ -354,7 +355,7 @@
 .faq {
     position: absolute;
     top: 27.31px;
-    left: 1490px;
+    left: 1520px;
     line-height: 30px;
     display: inline-block;
     width: 117px;
@@ -365,7 +366,7 @@
 .home {
     position: absolute;
     top: 27.31px;
-    left: 1350px;
+    left: 1380px;
     line-height: 30px;
     display: inline-block;
     width: 117px;
@@ -379,13 +380,13 @@
     left: 0;
     width: 100%; /* Ensures the bar spans the full width of the screen */
     height: 75px; /* Set the height for the toolbar */
-    background-color: rgba(255, 255, 255, 0.7); /* White background with 80% opacity */
+    background-color: rgba(255, 255, 255, 0.5); /* White background with 80% opacity */
     display: flex; /* Use flexbox for easy alignment of items */
     align-items: center; /* Vertically centers the content */
     justify-content: space-between; /* Distributes buttons within the toolbar */
     padding: 0 20px; /* Add some horizontal padding */
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for better design */
-    backdrop-filter: blur(15px); /* Adds a blurred background effect */
+    backdrop-filter: blur(12px); /* Adds a blurred background effect */
     z-index: 1000; /* Keeps it above other elements */
 }
 
