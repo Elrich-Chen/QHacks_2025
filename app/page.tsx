@@ -3,10 +3,17 @@
 import type { NextPage } from 'next';
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import styles from '../styles/page.module.css';
+import { useRouter } from 'next/navigation'; // Import useRouter from Next.js
 
 const LandingPage: NextPage = () => {
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter(); // Initialize the router
+
+  const handleClick = () => {
+    router.push('/listing'); // Navigate to /listing
+  };
 
   useEffect(() => {
     setIsClient(true); // Ensures this code runs only after the component mounts on the client
@@ -38,7 +45,9 @@ const LandingPage: NextPage = () => {
 
       <div className={styles.startButton}>
         <div className={styles.startButtonChild} />
-        <button><b className={styles.start}>Start</b></button>
+        <button onClick={handleClick}>
+          <b className={styles.start}>Start</b>
+        </button>
       </div>
 
       <div className={styles.rectangleParent}>
