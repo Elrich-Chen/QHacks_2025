@@ -4,6 +4,7 @@ import PostMediaGird from './PostMediaGird';
 import PostFooter from './PostFooter';
 
 interface PostProps {
+    id : string;
     user: {
       name: string;
       profilePic: string;
@@ -16,7 +17,7 @@ interface PostProps {
     media: string[];
   }
   
-  export default function Post({ user, content, media }: PostProps) {
+  export default function Post({ id, user, content, media }: PostProps) {
     return (
       <div style={{
         border: '1px solid #ddd',
@@ -29,7 +30,7 @@ interface PostProps {
         <PostHeader user={user} />
         <PostContent content={content} />
         <PostMediaGird media={media} />
-        <PostFooter />
+        <PostFooter id = {id}/>
       </div>
     );
   }

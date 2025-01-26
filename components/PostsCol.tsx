@@ -3,7 +3,7 @@ import Post from "./Post";
 export default function MainPage() {
     const posts = [
       {
-        id: 1,
+        id: '1',
         user: {
           name: 'Elrich Chen Limited',
           profilePic: './users/shrek.png',
@@ -28,7 +28,7 @@ export default function MainPage() {
         ],
       },
       {
-        id: 2,
+        id: '2',
         user: {
           name: 'Downtown Rentals',
           profilePic: './users/steve.jpg',
@@ -54,7 +54,7 @@ export default function MainPage() {
         ],
       },
       {
-        id: 3,
+        id: '3',
         user: {
           name: 'Lease Me Before You Go Go',
           profilePic: './users/henrycaviil.jpeg',
@@ -85,6 +85,7 @@ export default function MainPage() {
         {posts.map((post) => (
           <Post
             key={post.id}
+            id = {post.id}
             user={post.user}
             content={post.content}
             media={post.media}
