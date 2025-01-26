@@ -24,7 +24,7 @@ export default function PostFooter() {
           paddingLeft: '60px',
         }}>💬 Comment</button>
         
-        <Link href={'/'} style={{ display: 'inline-block' }}>
+        <Link href={'/chatbot1'} style={{ display: 'inline-block' }}>
         <button style={{
           background: '#1877f2',
           border: 'none',
