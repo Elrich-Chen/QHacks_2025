@@ -5,8 +5,8 @@ export default function MainPage() {
       {
         id: '1',
         user: {
-          name: 'Elrich Chen Limited',
-          profilePic: './users/shrek.png',
+          name: 'Elrich Chen',
+          profilePic: './elrich_pfp.jpg',
           timestamp: '1 hour ago',
         },
         content: {
@@ -30,7 +30,7 @@ export default function MainPage() {
       {
         id: '2',
         user: {
-          name: 'Downtown Rentals',
+          name: 'Elrich Chen',
           profilePic: './users/steve.jpg',
           timestamp: '2 hours ago',
         },
@@ -56,7 +56,7 @@ export default function MainPage() {
       {
         id: '3',
         user: {
-          name: 'Lease Me Before You Go Go',
+          name: 'Elrich Chen',
           profilePic: './users/henrycaviil.jpeg',
           timestamp: '3 hours ago',
         },

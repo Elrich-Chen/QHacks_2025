@@ -29,7 +29,7 @@ interface PostHeaderProps {
             height: '40px',
             borderRadius: '50%',
             marginRight: '10px',
-            objectFit: 'contain',
+            objectFit: 'cover',
           }}
         />
         </Link>

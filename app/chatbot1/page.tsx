@@ -12,6 +12,13 @@ const getFormattedTime = () => {
   return formattedTime;
 };
 
+type SummaryFeedback = {
+  good_questions: string[];
+  missed_questions: string[];
+  red_flags: string[];
+  final_grade: string;
+};
+
 const Chat = () => {
   const [message, setMessage] = useState(""); // User input message
   const [chatHistory, setChatHistory] = useState<{ sender: string; text: string; time: string }[]>([]); // Chat history with timestamps
@@ -46,15 +53,18 @@ const Chat = () => {
     ]);
 
     try {
-      const response = await fetch("http://localhost:5101/chat", {
+      const payload = {
+        listing_id: 1, // Adjust if necessary
+        message: message.trim(),
+      };
+      console.log("Payload Sent to Backend:", payload);
+      
+      const response = await fetch("http://127.0.0.1:5102/chat?listing=1", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          listing_id: 1, // Adjust if you want to make this dynamic
-          message: message.trim(),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -62,6 +72,7 @@ const Chat = () => {
       }
 
       const data = await response.json();
+      console.log(data);
 
       if (data.error) {
         throw new Error(data.error);
@@ -81,37 +92,95 @@ const Chat = () => {
       setLoading(false);
     }
   };
+  
+    // Function to call the summary API
+    const endConversation = async () => {
+      setEndingConversation(true);
+      setError(null);
 
-  const endConversation = async () => {
-    setEndingConversation(true);
-    setError(null);
+      // First, send the current message if there is one
+      if (message.trim()) {
+        const timestamp = getFormattedTime();
+        setChatHistory((prev) => [
+          ...prev,
+          { sender: "user", text: message.trim(), time: timestamp },
+        ]);
+        setMessage(""); // Clear input
 
-    try {
-      const response = await fetch("http://localhost:5101/summary?listing=1", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+        setIsProcessing(true); // Show processing animation
+        try {
+          const payload = {
+            listing_id: 1, // Adjust if necessary
+            message: message.trim(),
+          };
+          console.log("Payload Sent to Backend (End Conversation):", payload);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch summary from the backend.");
+          const response = await fetch("http://127.0.0.1:5102/chat?listing=1", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to send message to the backend.");
+          }
+
+          const data = await response.json();
+          console.log("Response from backend (End Conversation):", data);
+
+          if (data.error) {
+            throw new Error(data.error);
+          }
+
+          // Add AI response to chat history
+          setChatHistory((prev) => [
+            ...prev,
+            { sender: "ai", text: data.response, time: getFormattedTime() },
+          ]);
+        } catch (sendMessageError: any) {
+          setError(sendMessageError.message || "Error sending message before ending conversation.");
+          setIsProcessing(false);
+          setEndingConversation(false);
+          return; // Exit early if sending message fails
+        } finally {
+          setIsProcessing(false);
+        }
       }
 
-      const data = await response.json();
+      // Then, fetch the summary
+      try {
+        const summaryResponse = await fetch("http://127.0.0.1:5102/summary?listing=1", { // Changed endpoint to /summary
+          method: "GET", // Changed to GET request for summary
+          headers: { "Content-Type": "application/json" },
+        });
 
-      if (data.error) {
-        throw new Error(data.error);
+        if (!summaryResponse.ok) {
+          console.error(`Error fetching summary: ${summaryResponse.status} - ${summaryResponse.statusText}`);
+          const errorDetails = await summaryResponse.text();
+          console.error(`Summary Error Details: ${errorDetails}`);
+          throw new Error("Failed to fetch summary from the backend.");
+        }
+
+        const summaryData = await summaryResponse.json();
+        console.log("Summary Data:", summaryData);
+
+
+        if (summaryData.error) {
+          throw new Error(summaryData.error);
+        }
+        // Log just the feedback to verify its structure
+        console.log("Feedback:", summaryData.feedback);
+
+        // Extract the feedback part of the response
+        setSummary(summaryData.feedback);
+      } catch (summaryError: any) {
+        setError(summaryError.message || "An unknown error occurred while fetching summary.");
+      } finally {
+        setEndingConversation(false);
       }
-
-      // Save the summary data
-      setSummary(data);
-    } catch (err: any) {
-      setError(err.message || "An unknown error occurred.");
-    } finally {
-      setEndingConversation(false);
-    }
-  };
+    };
 
   useEffect(() => {
     // Auto scroll to the bottom when new messages are added
@@ -120,104 +189,140 @@ const Chat = () => {
     }
   }, [chatHistory]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault(); // Prevent the default behavior (e.g., newline)
-      sendMessage(); // Send the message
-    }
-  };
-
   return (
-    <div className="w-full h-[770px] relative bg-white overflow-hidden">
-      {/* Border */}
-      <div className="w-full h-[0px] top-[92.49px] absolute border border-[#c7c5c5]"></div>
-
-      {/* User Avatar */}
-      <div className="w-[72px] h-[72px] left-[30px] top-[10px] absolute bg-[#d9d9d9] rounded-full"></div>
-
-      {/* User Name */}
-      <div className="left-[118px] top-[38px] absolute text-black text-2xl font-bold font-['Inter']">John Doe</div>
-
-      {/* Chat History - Scrollable container */}
-      <div
-        ref={chatContainerRef}
-        className="w-full h-[510px] overflow-y-scroll scrollbar-hidden absolute top-[130px] left-0 p-4 bg-white rounded-b-[16px]"
-      >
-        {chatHistory.length === 0 ? (
-          <div className="w-full text-center text-gray-400">No messages yet. Start the conversation!</div>
-        ) : (
-          chatHistory.map((chat, index) => (
-            <div
-              key={index}
-              className={`mb-4 ${chat.sender === "user" ? "flex justify-end" : "flex justify-start"}`}
-            >
-              {chat.sender === "user" ? (
-                <div className="relative max-w-[40%]">
-                  <div className="bg-[#0866ff] text-white rounded-[20px] px-6 py-3 pt-5 pb-5">
-                    <div className="text-[20px] font-medium font-['Inter']">{chat.text}</div>
-                  </div>
-                  <div className="text-right text-[13px] font-bold text-black mt-1 mr-[10px]">{chat.time}</div> {/* Timestamp 10px from the right */}
-                </div>
-              ) : (
-                <div className="relative max-w-[40%]">
-                  {chat.text === "AI is typing..." ? (
-                    <div className="bg-[#d9d9d9] text-black rounded-[25px] px-6 py-3 pt-5 pb-5 flex justify-center items-center">
-                      <span className="dot-animation">.</span>
-                      <span className="dot-animation">.</span>
-                      <span className="dot-animation">.</span>
-                    </div>
-                  ) : (
-                    <div className="bg-[#d9d9d9] text-black rounded-[25px] px-6 py-3 pt-5 pb-5">
-                      <div className="text-[20px] font-medium font-['Inter']">{chat.text}</div>
-                    </div>
-                  )}
-                  <div className="text-left text-[13px] font-bold text-black mt-1 ml-[10px]">{chat.time}</div> {/* Timestamp 10px from the left */}
-                </div>
-              )}
-            </div>
-          ))
-        )}
+    <div className="min-h-screen bg-white flex">
+  {/* Main Chat Section */}
+  <div className="flex-1 flex flex-col items-center">
+    {/* Header */}
+    <div className="w-full max-w-lg flex items-center justify-between p-4 border-b border-gray-300">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 bg-gray-300 rounded-full"></div> {/* User Avatar */}
+        <h1 className="text-lg font-semibold text-black">John Doe</h1>
       </div>
-
-      {/* Input Box */}
-      <div className="w-full h-[70px] absolute top-[660px] left-1/2 transform -translate-x-1/2">
-        <div className="w-[800px] h-full bg-[#d9d9d9] rounded-[56.29px] flex items-center justify-between px-6 mx-auto">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 p-2 border-none bg-transparent text-black text-[20px] rounded outline-none"
-            disabled={loading || !!summary}
-            onKeyDown={handleKeyDown} // Handle Enter key press
-          />
-        </div>
+      <div className="flex items-center gap-4 text-purple-600">
+        <button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6.75 4.5l10.5 7.5-10.5 7.5V4.5z"
+            />
+          </svg>
+        </button>
+        <button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M17.25 6.75L6.75 17.25M6.75 6.75l10.5 10.5"
+            />
+          </svg>
+        </button>
       </div>
+    </div>
 
-      {/* End Conversation Button */}
-      <button
-        onClick={endConversation}
-        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 absolute top-[36px] right-[30px]"
-        disabled={endingConversation}
-      >
-        {endingConversation ? "Ending Conversation..." : "End Conversation"}
-      </button>
-
-      {/* Error Handling */}
-      {error && (
-        <div className="absolute top-[100px] left-[50%] transform -translate-x-[50%] bg-red-500 text-white p-4 rounded">
-          {error}
-        </div>
-      )}
-
-      {/* Conversation Summary */}
-      {summary && (
-        <div className="absolute top-[100px] left-[50%] transform -translate-x-[50%] bg-blue-500 text-white p-4 rounded w-1/2">
-          <h3>Conversation Summary</h3>
-          <p>{summary}</p>
-        </div>
+    {/* Chat History */}
+    <div className="w-full max-w-lg flex-1 p-4 overflow-y-auto bg-gray-100 border border-gray-300 rounded-lg mt-4">
+      {chatHistory.length === 0 ? (
+        <p className="text-gray-500 text-center">No messages yet. Start the conversation!</p>
+      ) : (
+        chatHistory.map((chat, index) => (
+          <div
+            key={index}
+            className={`mb-4 p-3 rounded-lg ${
+              chat.sender === "user"
+                ? "bg-blue-100 text-blue-900 text-right"
+                : "bg-gray-200 text-gray-900 text-left"
+            }`}
+          >
+            <strong>{chat.sender === "user" ? "You" : "AI"}:</strong> {chat.text}
+          </div>
+        ))
       )}
     </div>
+
+    {/* Error Message */}
+    {error && <p className="text-red-500 mt-4">{error}</p>}
+
+    {/* Input and Send Button */}
+    <div className="w-full max-w-lg flex gap-4 mt-4 items-center">
+      <input
+        type="text"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Type your message..."
+        className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+        disabled={loading || !!summary}
+      />
+      <button
+        onClick={sendMessage}
+        className="px-6 py-2 bg-blue-500 text-white font-medium rounded-full hover:bg-blue-600 transition duration-200 disabled:bg-gray-300"
+        disabled={loading || !!summary}
+      >
+        {loading ? "Sending..." : "Send"}
+      </button>
+    </div>
+
+    {/* End Conversation Button */}
+    <button
+      onClick={endConversation}
+      className="mt-4 px-6 py-2 bg-red-500 text-white font-medium rounded-full hover:bg-red-600 transition duration-200 disabled:bg-gray-300"
+      disabled={endingConversation}
+    >
+      {endingConversation ? "Ending Conversation..." : "End Conversation"}
+    </button>
+  </div>
+
+  {/* Sidebar Summary Section */}
+  {summary && (
+    <div className="w-96 bg-gray-50 border-l border-gray-300 p-6 flex flex-col shadow-md text-black">
+      <h2 className="text-lg font-bold text-gray-800 mb-4">Conversation Summary</h2>
+      <div className="mb-4">
+        <p className="font-semibold">Final Grade:</p>
+        <p className="text-gray-700">{summary?.final_grade || "N/A"}</p>
+      </div>
+      <div className="mb-4">
+        <p className="font-semibold">Good Questions Asked:</p>
+        <ul className="list-disc pl-4 text-gray-700">
+          {(summary?.good_questions || []).map((question: string, index: string) => (
+            <li key={index}>{question}</li>
+          )) || <p>None</p>}
+        </ul>
+      </div>
+      <div className="mb-4">
+        <p className="font-semibold">Missed Questions:</p>
+        <ul className="list-disc pl-4 text-gray-700">
+          {(summary?.missed_questions || []).map((question : string, index: string) => (
+            <li key={index}>{question}</li>
+          )) || <p>None</p>}
+        </ul>
+      </div>
+      <div>
+        <p className="font-semibold">Red Flags:</p>
+        <ul className="list-disc pl-4 text-gray-700">
+          {(summary?.red_flags || []).map((flag : string, index: string) => (
+            <li key={index}>{flag}</li>
+          )) || <p>None</p>}
+        </ul>
+      </div>
+    </div>
+  )}
+</div>
+
   );
 };
 
